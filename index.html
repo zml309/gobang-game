@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋小游戏</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #00ffff;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 49%, rgba(0, 255, 255, 0.05) 50%, transparent 51%);
+            background-size: 100% 100%, 100% 100%, 20px 20px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        h1 {
+            color: #00ffff;
+            margin-bottom: 30px;
+            font-size: 2.8rem;
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3);
+            letter-spacing: 4px;
+            border: 2px solid #00ffff;
+            padding: 15px 30px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        
+        .game-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            padding: 30px;
+            max-width: 650px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 49%, rgba(0, 255, 255, 0.05) 50%, transparent 51%);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            position: relative;
+        }
+        
+        .current-player {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: #00ffff;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        
+        .player-black, .player-white {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .player-black::before, .player-white::before {
+            content: '';
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            border: 2px solid #00ffff;
+        }
+        
+        .player-black::before {
+            background: radial-gradient(circle at 30% 30%, #333, #000);
+        }
+        
+        .player-white::before {
+            background: radial-gradient(circle at 30% 30%, #fff, #e0e0e0);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5), inset 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ffff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+        
+        button:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        button:hover::before {
+            opacity: 1;
+            animation: shine 1.5s ease-in-out;
+        }
+        
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) rotate(45deg);
+            }
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            position: relative;
+        }
+        
+        .board-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 49%, rgba(0, 255, 255, 0.05) 50%, transparent 51%);
+            background-size: 15px 15px;
+            pointer-events: none;
+        }
+        
+        #board {
+            border-collapse: collapse;
+            background: transparent;
+            position: relative;
+        }
+        
+        #board tr {
+            height: 30px;
+        }
+        
+        #board td {
+            width: 30px;
+            height: 30px;
+            border: 0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        #board td::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background-color: rgba(0, 255, 255, 0.3);
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        
+        #board td::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background-color: rgba(0, 255, 255, 0.3);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        
+        #board tr:first-child td::before {
+            top: 0;
+            height: 50%;
+        }
+        
+        #board tr:last-child td::before {
+            top: 50%;
+            height: 50%;
+        }
+        
+        #board td:first-child::after {
+            left: 0;
+            width: 50%;
+        }
+        
+        #board td:last-child::after {
+            left: 50%;
+            width: 50%;
+        }
+        
+        #board td:hover {
+            background-color: rgba(0, 255, 255, 0.1);
+        }
+        
+        #board td:hover::before,
+        #board td:hover::after {
+            background-color: rgba(0, 255, 255, 0.6);
+        }
+        
+        .stone {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: dropIn 0.4s ease-out;
+            border: 2px solid #00ffff;
+            z-index: 2;
+        }
+        
+        @keyframes dropIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0) translateY(-30px);
+                opacity: 0;
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            }
+            80% {
+                transform: translate(-50%, -50%) scale(1.2) translateY(0);
+                opacity: 1;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) translateY(0);
+                opacity: 1;
+                box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+            }
+        }
+        
+        .stone.black {
+            background: radial-gradient(circle at 30% 30%, #333, #000);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5), inset 0 0 5px rgba(0, 255, 255, 0.2);
+        }
+        
+        .stone.white {
+            background: radial-gradient(circle at 30% 30%, #fff, #e0e0e0);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5), inset 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+        
+        .message {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #00ffff;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .difficulty-buttons {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .difficulty-buttons.active {
+            display: flex;
+        }
+        
+        .mode-btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            margin: 5px 0;
+        }
+        
+        .difficulty-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            margin: 5px 0;
+        }
+        
+        .ai-status {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2rem;
+            color: #00ffff;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        
+        .ai-status.active {
+            display: block;
+        }
+        
+        .ai-status::before {
+            content: 'AI 思考中...';
+            animation: thinking 1.5s infinite;
+        }
+        
+        @keyframes thinking {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+                padding: 10px 20px;
+                letter-spacing: 2px;
+            }
+            
+            .game-container {
+                padding: 20px;
+            }
+            
+            #board td {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .stone {
+                width: 26px;
+                height: 26px;
+            }
+            
+            .message {
+                font-size: 1.2rem;
+                padding: 15px;
+            }
+            
+            .modal-content {
+                padding: 30px;
+            }
+            
+            .modal-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+                padding: 8px 16px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 20px;
+                align-items: stretch;
+                text-align: center;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            #board td {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .stone {
+                width: 22px;
+                height: 22px;
+            }
+            
+            .board-container {
+                padding: 15px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+            }
+            
+            .modal-title {
+                font-size: 1.3rem;
+                margin-bottom: 20px;
+            }
+            
+            .mode-btn, .difficulty-btn {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>五子棋小游戏</h1>
+    
+    <!-- 模式选择弹窗 -->
+    <div class="modal active" id="modeModal">
+        <div class="modal-content">
+            <div class="modal-title">选择游戏模式</div>
+            <div class="mode-buttons">
+                <button class="mode-btn" onclick="selectMode('pvp')">双人对战</button>
+                <button class="mode-btn" onclick="selectMode('pve')">人机对战</button>
+            </div>
+            <div class="difficulty-buttons" id="difficultyButtons">
+                <div class="modal-title" style="font-size: 1.5rem; margin-bottom: 20px;">选择AI难度</div>
+                <button class="difficulty-btn" onclick="startGame('easy')">简单</button>
+                <button class="difficulty-btn" onclick="startGame('medium')">中等</button>
+                <button class="difficulty-btn" onclick="startGame('hard')">困难</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div class="game-info">
+            <div class="current-player">
+                当前玩家: <span id="current-player" class="player-black">黑棋</span>
+            </div>
+            <div class="controls">
+                <button onclick="restartGame()">重新开始</button>
+                <button onclick="undoMove()">悔棋</button>
+            </div>
+        </div>
+        
+        <div class="ai-status" id="aiStatus"></div>
+        
+        <div class="board-container">
+            <table id="board"></table>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
+    
+    <script>
+        // 游戏初始化
+        const boardSize = 15;
+        let board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
+        let currentPlayer = 1; // 1: 黑棋, 2: 白棋
+        let gameOver = false;
+        let moveHistory = [];
+        let gameMode = 'pvp'; // 'pvp': 双人对战, 'pve': 人机对战
+        let aiDifficulty = 'easy'; // 'easy': 简单, 'medium': 中等, 'hard': 困难
+        let isAITurn = false;
+        
+        // 选择游戏模式
+        function selectMode(mode) {
+            gameMode = mode;
+            if (mode === 'pve') {
+                document.getElementById('difficultyButtons').classList.add('active');
+            } else {
+                startGame('pvp');
+            }
+        }
+        
+        // 开始游戏
+        function startGame(difficulty) {
+            if (difficulty === 'pvp') {
+                aiDifficulty = 'pvp';
+            } else {
+                aiDifficulty = difficulty;
+            }
+            document.getElementById('modeModal').classList.remove('active');
+            restartGame();
+        }
+        
+        // 创建棋盘
+        function createBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            
+            for (let i = 0; i < boardSize; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < boardSize; j++) {
+                    const cell = document.createElement('td');
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => handleClick(i, j));
+                    row.appendChild(cell);
+                }
+                boardElement.appendChild(row);
+            }
+        }
+        
+        // 处理点击事件
+        function handleClick(row, col) {
+            if (gameOver || board[row][col] !== 0 || isAITurn) return;
+            
+            // 落子
+            board[row][col] = currentPlayer;
+            moveHistory.push({row, col, player: currentPlayer});
+            
+            // 更新UI
+            updateBoardUI();
+            
+            // 检查胜负
+            if (checkWin(row, col, currentPlayer)) {
+                gameOver = true;
+                const winner = currentPlayer === 1 ? '黑棋' : '白棋';
+                document.getElementById('message').textContent = `${winner} 获胜！`;
+                return;
+            }
+            
+            // 检查平局
+            if (checkDraw()) {
+                gameOver = true;
+                document.getElementById('message').textContent = '平局！';
+                return;
+            }
+            
+            // 切换玩家
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updateCurrentPlayerUI();
+            
+            // AI回合
+            if (gameMode === 'pve' && currentPlayer === 2 && !gameOver) {
+                isAITurn = true;
+                document.getElementById('aiStatus').classList.add('active');
+                
+                setTimeout(() => {
+                    makeAIMove();
+                    document.getElementById('aiStatus').classList.remove('active');
+                    isAITurn = false;
+                }, 500);
+            }
+        }
+        
+        // AI落子
+        function makeAIMove() {
+            let move;
+            
+            switch (aiDifficulty) {
+                case 'easy':
+                    move = getEasyAIMove();
+                    break;
+                case 'medium':
+                    move = getMediumAIMove();
+                    break;
+                case 'hard':
+                    move = getHardAIMove();
+                    break;
+            }
+            
+            if (move) {
+                board[move.row][move.col] = 2;
+                moveHistory.push({row: move.row, col: move.col, player: 2});
+                updateBoardUI();
+                
+                if (checkWin(move.row, move.col, 2)) {
+                    gameOver = true;
+                    document.getElementById('message').textContent = '白棋 获胜！';
+                    return;
+                }
+                
+                if (checkDraw()) {
+                    gameOver = true;
+                    document.getElementById('message').textContent = '平局！';
+                    return;
+                }
+                
+                currentPlayer = 1;
+                updateCurrentPlayerUI();
+            }
+        }
+        
+        // 简单AI：随机落子 + 基本防守
+        function getEasyAIMove() {
+            const emptyCells = [];
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    if (board[i][j] === 0) {
+                        emptyCells.push({row: i, col: j});
+                    }
+                }
+            }
+            
+            // 检查是否需要防守
+            for (const cell of emptyCells) {
+                board[cell.row][cell.col] = 2;
+                if (checkWin(cell.row, cell.col, 2)) {
+                    board[cell.row][cell.col] = 0;
+                    return cell;
+                }
+                board[cell.row][cell.col] = 0;
+            }
+            
+            // 随机选择
+            return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        }
+        
+        // 中等AI：评分系统
+        function getMediumAIMove() {
+            let bestMove = null;
+            let bestScore = -Infinity;
+            
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    if (board[i][j] === 0) {
+                        const score = evaluatePosition(i, j, 2) + evaluatePosition(i, j, 1) * 0.8;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMove = {row: i, col: j};
+                        }
+                    }
+                }
+            }
+            
+            return bestMove;
+        }
+        
+        // 困难AI：Minimax算法（优化速度）
+        function getHardAIMove() {
+            let bestMove = null;
+            let bestScore = -Infinity;
+            const depth = 4; // 调整深度到4层，平衡速度和质量
+            
+            // 按优先级排序搜索位置
+            const moves = getSortedMoves();
+            
+            // 限制搜索数量，只搜索前20个最佳位置
+            const searchLimit = Math.min(20, moves.length);
+            
+            for (let i = 0; i < searchLimit; i++) {
+                const move = moves[i];
+                board[move.row][move.col] = 2;
+                const score = minimax(board, depth - 1, false, -Infinity, Infinity);
+                board[move.row][move.col] = 0;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+            
+            return bestMove || getAvailableMoves()[0];
+        }
+        
+        // Minimax算法
+        function minimax(board, depth, isMaximizing, alpha, beta) {
+            if (depth === 0) {
+                return evaluateBoard();
+            }
+            
+            const moves = getAvailableMoves();
+            
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (const move of moves) {
+                    board[move.row][move.col] = 2;
+                    const evalScore = minimax(board, depth - 1, false, alpha, beta);
+                    board[move.row][move.col] = 0;
+                    maxEval = Math.max(maxEval, evalScore);
+                    alpha = Math.max(alpha, evalScore);
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (const move of moves) {
+                    board[move.row][move.col] = 1;
+                    const evalScore = minimax(board, depth - 1, true, alpha, beta);
+                    board[move.row][move.col] = 0;
+                    minEval = Math.min(minEval, evalScore);
+                    beta = Math.min(beta, evalScore);
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
+        }
+        
+        // 评估棋盘
+        function evaluateBoard() {
+            let score = 0;
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    if (board[i][j] === 2) {
+                        score += evaluatePosition(i, j, 2);
+                    } else if (board[i][j] === 1) {
+                        score -= evaluatePosition(i, j, 1);
+                    }
+                }
+            }
+            return score;
+        }
+        
+        // 评估位置分数
+        function evaluatePosition(row, col, player) {
+            let score = 0;
+            const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+            const opponent = player === 1 ? 2 : 1;
+            
+            for (const [dx, dy] of directions) {
+                // 检查当前玩家的棋型
+                const [count, openEnds] = getPatternInfo(row, col, player, dx, dy);
+                
+                // 活五（五连子）
+                if (count >= 5) score += 1000000;
+                // 冲四（四连子，有一个开口）
+                else if (count === 4 && openEnds === 1) score += 100000;
+                // 活四（四连子，有两个开口）
+                else if (count === 4 && openEnds === 2) score += 1000000;
+                // 冲三（三连子，有一个开口）
+                else if (count === 3 && openEnds === 1) score += 1000;
+                // 活三（三连子，有两个开口）
+                else if (count === 3 && openEnds === 2) score += 10000;
+                // 活二（两连子，有两个开口）
+                else if (count === 2 && openEnds === 2) score += 500;
+                // 冲二（两连子，有一个开口）
+                else if (count === 2 && openEnds === 1) score += 100;
+                
+                // 检查对手的棋型（防守）
+                const [oppCount, oppOpenEnds] = getPatternInfo(row, col, opponent, dx, dy);
+                
+                // 阻挡对手的活五
+                if (oppCount >= 5) score += 999999;
+                // 阻挡对手的冲四
+                else if (oppCount === 4 && oppOpenEnds === 1) score += 99999;
+                // 阻挡对手的活四
+                else if (oppCount === 4 && oppOpenEnds === 2) score += 999999;
+                // 阻挡对手的冲三
+                else if (oppCount === 3 && oppOpenEnds === 1) score += 999;
+                // 阻挡对手的活三
+                else if (oppCount === 3 && oppOpenEnds === 2) score += 9999;
+                // 阻挡对手的活二
+                else if (oppCount === 2 && oppOpenEnds === 2) score += 499;
+            }
+            
+            // 中心位置加分
+            const centerRow = Math.floor(boardSize / 2);
+            const centerCol = Math.floor(boardSize / 2);
+            const distance = Math.max(Math.abs(row - centerRow), Math.abs(col - centerCol));
+            score += (10 - distance) * 5;
+            
+            return score;
+        }
+        
+        // 获取棋型信息
+        function getPatternInfo(row, col, player, dx, dy) {
+            let count = 1;
+            let openEnds = 0;
+            
+            // 正方向
+            for (let i = 1; i < 5; i++) {
+                const newRow = row + i * dx;
+                const newCol = col + i * dy;
+                if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
+                    if (board[newRow][newCol] === player) {
+                        count++;
+                    } else if (board[newRow][newCol] === 0) {
+                        openEnds++;
+                        break;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            
+            // 反方向
+            for (let i = 1; i < 5; i++) {
+                const newRow = row - i * dx;
+                const newCol = col - i * dy;
+                if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
+                    if (board[newRow][newCol] === player) {
+                        count++;
+                    } else if (board[newRow][newCol] === 0) {
+                        openEnds++;
+                        break;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            
+            return [count, openEnds];
+        }
+        
+        // 获取可用落子位置
+        function getAvailableMoves() {
+            const moves = [];
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    if (board[i][j] === 0) {
+                        moves.push({row: i, col: j});
+                    }
+                }
+            }
+            return moves;
+        }
+        
+        // 获取优先搜索位置（有棋子周围的位置）
+        function getPriorityMoves() {
+            const priorityMoves = new Set();
+            const directions = [[-2, -2], [-2, -1], [-2, 0], [-2, 1], [-2, 2],
+                               [-1, -2], [-1, -1], [-1, 0], [-1, 1], [-1, 2],
+                               [0, -2], [0, -1], [0, 1], [0, 2],
+                               [1, -2], [1, -1], [1, 0], [1, 1], [1, 2],
+                               [2, -2], [2, -1], [2, 0], [2, 1], [2, 2]];
+            
+            // 搜索所有有棋子的位置周围
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    if (board[i][j] !== 0) {
+                        for (const [dx, dy] of directions) {
+                            const newRow = i + dx;
+                            const newCol = j + dy;
+                            if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize && board[newRow][newCol] === 0) {
+                                priorityMoves.add(`${newRow},${newCol}`);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 如果没有优先位置，返回所有可用位置
+            if (priorityMoves.size === 0) {
+                return getAvailableMoves();
+            }
+            
+            // 转换回对象数组
+            const moves = [];
+            for (const moveStr of priorityMoves) {
+                const [row, col] = moveStr.split(',').map(Number);
+                moves.push({row, col});
+            }
+            return moves;
+        }
+        
+        // 获取排序后的搜索位置（按分数排序）
+        function getSortedMoves() {
+            const moves = getPriorityMoves();
+            
+            // 为每个位置评分并排序
+            const scoredMoves = moves.map(move => {
+                // 临时放置棋子并评估
+                board[move.row][move.col] = 2;
+                const score = evaluateBoard();
+                board[move.row][move.col] = 0;
+                return { ...move, score };
+            });
+            
+            // 按分数降序排序
+            scoredMoves.sort((a, b) => b.score - a.score);
+            
+            // 返回排序后的位置（不含分数）
+            return scoredMoves.map(({ score, ...move }) => move);
+        }
+        
+        // 更新棋盘UI
+        function updateBoardUI() {
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    const cell = document.querySelector(`td[data-row="${i}"][data-col="${j}"]`);
+                    cell.innerHTML = '';
+                    
+                    if (board[i][j] === 1) {
+                        const stone = document.createElement('div');
+                        stone.className = 'stone black';
+                        cell.appendChild(stone);
+                    } else if (board[i][j] === 2) {
+                        const stone = document.createElement('div');
+                        stone.className = 'stone white';
+                        cell.appendChild(stone);
+                    }
+                }
+            }
+        }
+        
+        // 更新当前玩家UI
+        function updateCurrentPlayerUI() {
+            const currentPlayerElement = document.getElementById('current-player');
+            currentPlayerElement.className = currentPlayer === 1 ? 'player-black' : 'player-white';
+            currentPlayerElement.textContent = currentPlayer === 1 ? '黑棋' : '白棋';
+        }
+        
+        // 检查胜负
+        function checkWin(row, col, player) {
+            const directions = [
+                [0, 1],   // 水平
+                [1, 0],   // 垂直
+                [1, 1],   // 对角线
+                [1, -1]   // 反对角线
+            ];
+            
+            for (const [dx, dy] of directions) {
+                let count = 1;
+                
+                // 向正方向检查
+                for (let i = 1; i < 5; i++) {
+                    const newRow = row + i * dx;
+                    const newCol = col + i * dy;
+                    if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize && board[newRow][newCol] === player) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // 向反方向检查
+                for (let i = 1; i < 5; i++) {
+                    const newRow = row - i * dx;
+                    const newCol = col - i * dy;
+                    if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize && board[newRow][newCol] === player) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                if (count >= 5) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // 检查平局
+        function checkDraw() {
+            for (let i = 0; i < boardSize; i++) {
+                for (let j = 0; j < boardSize; j++) {
+                    if (board[i][j] === 0) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
+            currentPlayer = 1;
+            gameOver = false;
+            moveHistory = [];
+            isAITurn = false;
+            createBoard();
+            updateCurrentPlayerUI();
+            document.getElementById('message').textContent = '';
+            document.getElementById('aiStatus').classList.remove('active');
+        }
+        
+        // 悔棋
+        function undoMove() {
+            if (moveHistory.length === 0 || gameOver || isAITurn) return;
+            
+            // 人机对战需要悔两步
+            const steps = gameMode === 'pve' ? 2 : 1;
+            
+            for (let i = 0; i < steps && moveHistory.length > 0; i++) {
+                const lastMove = moveHistory.pop();
+                board[lastMove.row][lastMove.col] = 0;
+            }
+            
+            currentPlayer = moveHistory.length > 0 ? moveHistory[moveHistory.length - 1].player : 1;
+            updateBoardUI();
+            updateCurrentPlayerUI();
+            document.getElementById('message').textContent = '';
+        }
+        
+        // 初始化游戏
+        createBoard();
+    </script>
+</body>
+</html>
